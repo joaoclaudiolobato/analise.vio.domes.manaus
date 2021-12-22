@@ -1,0 +1,141 @@
+---
+title: "Analisando Ocorrências de violência doméstica em Manaus"
+author: "João Claudio da Silva Araujo Lobato"
+date: "20/12/2021"
+output:
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+---
+
+
+## Introdução
+
+<br>
+
+Nesse estudo vamos dar uma olhada nos dados de violência doméstica na cidade de Manaus. O nosso banco de dados possui ocorrências de violência domestica nos anos de 2019, 2020 e de 2021 de janeiro a outubro.
+<br>
+
+## Banco de Dados
+
+<br>
+
+O nosso banco de dados foi obtido através do site da [SSP AM](https://www.ssp.am.gov.br/ssp-dados), nele você pode encontrar vários dados relacionados a crimes que ocorreram tanto em Manaus quanto no interior do estado do Amazonas.
+
+Agora vamos iniciar nossa análise.
+<br>
+
+
+#### Importando nossos dados e carregando pacotes
+
+<br>
+Antes de tudo, vamos chamar todas as bibliotecas que utilizaremos e ler o nosso banco de dados.
+<br>
+
+```{r message=FALSE, warning=FALSE}
+require(ggthemes)
+require(ggplot2)
+require(treemapify)
+require(dplyr)
+require(fpp2)
+setwd("C:/Users/Joao/Documents")# setando o diretorio e lendo os dados
+dadostotal=openxlsx::read.xlsx("viomulher.xlsx","Total")
+dadosgeral=openxlsx::read.xlsx("viomulher.xlsx","Geral")
+dados=ts(dadostotal$Total,start=2019,end=c(2021,10),frequency = 12)# transformando em serie temporal
+```
+
+
+
+### Resumo estatístico das nossas variáveis
+
+<br>
+Inicialmente vamos visualizar em uma tabela, algumas medidas de resumo dos nossos dados como: média, desvio padrão, máximo e mínimo.
+<br>
+
+```{r message=FALSE, warning=FALSE}
+#extraindo as medias de resumo
+medias=round(c(mean(dados[1:12]),mean(dados[13:24]),mean(dados[25:34]),mean(dados)),2)#medias com 2 casas decimais
+sds=round(c(sd(dados[1:12]),sd(dados[13:24]),sd(dados[25:34]),sd(dados)),2)#desvio com 2 casas
+linnome=c("2019","2020","2021","Geral")# nome linhas
+maxi=c(max(dados[1:12]),max(dados[13:24]),max(dados[25:34]),max(dados))#valores maximos
+mini=c(min(dados[1:12]),min(dados[13:24]),min(dados[25:34]),min(dados))#valores minimos
+#criando tabela
+tabela=data.frame(linnome,medias,sds,mini,maxi)
+DT::datatable(tabela,colnames = c('', 'Média',"Desvio Padão","Mínimo","Máximo"),rownames = FALSE,options = list(searching = FALSE))
+```
+
+
+
+### Visualização de Dados
+
+A visualização de dados é a apresentação das nossas Variáveis quantitativas em uma forma gráfica, fazendo assim que tenhamos um melhor entendimento de nossos dados.
+
+
+
+#### Análise ano a ano
+
+
+```{r,fig.align='center', message=FALSE, warning=FALSE,fig.width=9}
+# criando o gráfico sazonal
+ggseasonplot(dados, main="Comparativo ano a ano",year.labels=TRUE)+
+  geom_point()+
+  scale_color_discrete(name= "Ano")+xlab("Mês")+ylab("Ocorrências")
+```
+<br>
+Acima vemos que o ano de `2020` foi o ano no qual a cidade de Manaus teve maiores ocorrências de violência doméstica, seguido por `2021`. O que pode ser explicado muito por conta das medidas rígidas de restrição que o estado do Amazonas sofreu como um todo por conta da pandemia do Corona vírus.
+<br>
+
+#### Evolução dos casos
+
+
+```{r,fig.align='center', message=FALSE, warning=FALSE,fig.width=9}
+forecast::autoplot(dados,lwd=1,xlab="Tempo",ylab="Casos",main="Evolução de casos de Violência Doméstica de Mulheres em Manaus",col=4)+geom_point(size=2.5,col=4)
+```
+
+
+<br>
+A partir do gráfico acima podemos acompanhar a evolução da quantidade de casos de violência doméstica ao decorrer do tempo, como dito anteriormente, em `agosto de 2020` tivemos o nosso pico, com o total de 2.2457 casos.
+
+
+Também é possível observar que depois de janeiro de 2021 houve um grande aumento nos casos, chegando próximo novamente ao pico de 2020.
+
+<br>
+
+
+#### Top 20 Natureza dos casos de violência doméstica
+
+```{r, fig.align='center', message=FALSE, warning=FALSE,fig.width=9}
+#selecionando o Top20
+Top20 = dadosgeral%>%
+  dplyr::arrange(-Total)%>%
+  head(20)
+#criando o treemap
+tree=ggplot(data = Top20, aes(fill = NATUREZA, area = Total, label = paste0(NATUREZA,"\n",  prettyNum(Total,big.mark="."))))+
+  geom_treemap()+
+  geom_treemap_text(colour ="white", place = "centre")+
+  theme(legend.position = "none")
+tree
+```
+
+<br>
+O gráfico acima nos dá uma ideia do total de ocorrências de cada uma das 20 naturezas dos casos de violência doméstica desde 2019. Com isso podemos ver que umas das principais naturezas são: ameaça, injuria, lesão corporal, vias de fato e perturbação da tranquilidade.
+<br>
+
+
+
+### Considerações Finais
+
+<br>
+
+Esta foi apenas uma análise inicial, há inúmeras coisas que podemos fazer com esses dados. Pode-se enriquecer mais os dados adicionados outras bases de dados disponibilizadas no próprio site da SSP-AM como a de feminicídio por exemplo. No entanto com esta análise inicial realizadas já podemos tirar informações importantes, podemos observar que a pandemia trouxe um aumento nos casos de violência domestica em Manaus e que infelizmente em 2021 as coisas não estão tão diferentes. Assim como a injuria e a ameaça são uma das principais naturezas da violência doméstica em Manaus.
+
+<br>
+
+
+<br>
+Repositorio no GitHub: https://github.com/joaoclaudiolobato/analise.vio.domes.manaus
+
+linkedin: https://www.linkedin.com/in/joaoclaudiolobato/
+
+
+<br>
